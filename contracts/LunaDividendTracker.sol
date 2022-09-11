@@ -29,7 +29,7 @@ contract _LUNADividendTracker is DividendPayingToken {
     DividendPayingToken("Luna_Tracker", "Luna_Tracker", _dividentToken)
   {
     claimWait = 60;
-    minimumTokenBalanceForDividends = 1_000_000 * (10**9);
+    minimumTokenBalanceForDividends = 100_000 * (10**9);
   }
 
   function _transfer(

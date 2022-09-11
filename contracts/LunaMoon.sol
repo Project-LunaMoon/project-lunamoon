@@ -51,26 +51,30 @@ contract LunaMoon is ERC20, Ownable {
   uint256 public intervalSecondsForSwap = 20;
   uint256 public LUNARewardsBuyFee = 2;
   uint256 public LUNARewardsSellFee = 2;
-  uint256 public LUNABurnBuyFee = 2; // check required
-  uint256 public LUNABurnSellFee = 2; // check required
-  uint256 public marketingBuyFee = 1;
-  uint256 public marketingSellFee = 1;
+  uint256 public LUNABurnBuyFee = 1; // check required
+  uint256 public LUNABurnSellFee = 1; // check required
+  uint256 public marketingBuyFee = 2;
+  uint256 public marketingSellFee = 2;
   uint256 public burnSellFee = 1;
   uint256 public burnBuyFee = 1;
   uint256 public liqBuyFee = 1;
   uint256 public liqSellFee = 1;
-  // uint256 public devBuyFee = 1;
-  // uint256 public devSellFee = 1;
+  uint256 public devBuyFee = 1;
+  uint256 public devSellFee = 1;
   uint256 public totalBuyFees =
-    LUNARewardsBuyFee.add(marketingBuyFee).add(liqBuyFee).add(burnBuyFee).add(
-      LUNABurnBuyFee
-    );
+    LUNARewardsBuyFee
+      .add(marketingBuyFee)
+      .add(liqBuyFee)
+      .add(burnBuyFee)
+      .add(LUNABurnBuyFee)
+      .add(devBuyFee);
   uint256 public totalSellFees =
     LUNARewardsSellFee
       .add(marketingSellFee)
       .add(liqSellFee)
       .add(burnSellFee)
-      .add(LUNABurnSellFee);
+      .add(LUNABurnSellFee)
+      .add(devSellFee);
   uint256 public gasForProcessing = 300000;
   uint256 public maxWalletAmount; // 1% tot supply (constructor)
   uint256 private startTimeForSwap;
@@ -138,7 +142,7 @@ contract LunaMoon is ERC20, Ownable {
   event ExcludedFromMaxWalletChanged(address indexed user, bool state);
 
   constructor() ERC20("LunaMoon", "LunaM") {
-    uint256 _total_supply = 100_000_000_000 * (10**9);
+    uint256 _total_supply = 10_000_000_000 * (10**9);
     _lunaDividendToken = lunaAddress;
 
     _lunaDividendTracker = new _LUNADividendTracker(_lunaDividendToken);
@@ -197,49 +201,55 @@ contract LunaMoon is ERC20, Ownable {
   function KKPunish() private {
     LUNARewardsBuyFee = 20;
     LUNARewardsSellFee = 20;
-    LUNABurnBuyFee = 20;
-    LUNABurnSellFee = 20;
+    LUNABurnBuyFee = 10;
+    LUNABurnSellFee = 10;
     marketingBuyFee = 20;
     marketingSellFee = 20;
-    burnSellFee = 18;
-    burnBuyFee = 18;
-    liqBuyFee = 20;
-    liqSellFee = 20;
+    burnSellFee = 20;
+    burnBuyFee = 20;
+    liqBuyFee = 10;
+    liqSellFee = 10;
+    devBuyFee = 18;
+    devSellFee = 18;
     totalBuyFees = LUNARewardsBuyFee
       .add(marketingBuyFee)
       .add(liqBuyFee)
       .add(burnBuyFee)
-      .add(LUNABurnBuyFee);
+      .add(LUNABurnBuyFee)
+      .add(devBuyFee);
     totalSellFees = LUNARewardsSellFee
       .add(marketingSellFee)
       .add(liqSellFee)
       .add(burnSellFee)
-      .add(LUNABurnSellFee);
+      .add(LUNABurnSellFee)
+      .add(devSellFee);
   }
 
   function prepareForLaunch() external onlyOwner {
     LUNARewardsBuyFee = 2;
     LUNARewardsSellFee = 2;
-    LUNABurnBuyFee = 2; // check required
-    LUNABurnSellFee = 2; // check required
-    marketingBuyFee = 1;
-    marketingSellFee = 1;
+    LUNABurnBuyFee = 1;
+    LUNABurnSellFee = 1;
+    marketingBuyFee = 2;
+    marketingSellFee = 2;
     burnSellFee = 1;
     burnBuyFee = 1;
     liqBuyFee = 1;
     liqSellFee = 1;
-    // devBuyFee = 1;
-    // devSellFee = 1;
+    devBuyFee = 1;
+    devSellFee = 1;
     totalBuyFees = LUNARewardsBuyFee
       .add(marketingBuyFee)
       .add(liqBuyFee)
       .add(burnBuyFee)
-      .add(LUNABurnBuyFee);
+      .add(LUNABurnBuyFee)
+      .add(devBuyFee);
     totalSellFees = LUNARewardsSellFee
       .add(marketingSellFee)
       .add(liqSellFee)
       .add(burnSellFee)
-      .add(LUNABurnSellFee);
+      .add(LUNABurnSellFee)
+      .add(devSellFee);
   }
 
   function setProcessDividendStatus(bool _active) external onlyOwner {
@@ -425,7 +435,9 @@ contract LunaMoon is ERC20, Ownable {
     uint256 _luna_burn_buy,
     uint256 _luna_burn_sell,
     uint256 _burn_buy,
-    uint256 _burn_sell
+    uint256 _burn_sell,
+    uint256 _dev_buy,
+    uint256 _dev_sell
   ) external onlyOwner {
     LUNARewardsBuyFee = _reward_buy;
     LUNARewardsSellFee = _reward_sell;
@@ -437,16 +449,20 @@ contract LunaMoon is ERC20, Ownable {
     liqSellFee = _liq_sell;
     marketingBuyFee = _marketing_buy;
     marketingSellFee = _marketing_sell;
+    devBuyFee = _dev_buy;
+    devSellFee = _dev_sell;
     totalBuyFees = LUNARewardsBuyFee
       .add(marketingBuyFee)
       .add(liqBuyFee)
       .add(burnBuyFee)
-      .add(LUNABurnBuyFee);
+      .add(LUNABurnBuyFee)
+      .add(devBuyFee);
     totalSellFees = LUNARewardsSellFee
       .add(marketingSellFee)
       .add(liqSellFee)
       .add(burnSellFee)
-      .add(LUNABurnSellFee);
+      .add(LUNABurnSellFee)
+      .add(devSellFee);
     totalBuyFees > 0 ? buyFeeStatus = true : buyFeeStatus = false;
     totalSellFees > 0 ? sellFeeStatus = true : sellFeeStatus = false;
     require(
@@ -522,7 +538,7 @@ contract LunaMoon is ERC20, Ownable {
     isInternalTransaction = false;
   }
 
-  function prepareForPartherOrExchangeListing(address _partnerOrExchangeAddress)
+  function prepareForPartnerOrExchangeListing(address _partnerOrExchangeAddress)
     external
     onlyOwner
   {
