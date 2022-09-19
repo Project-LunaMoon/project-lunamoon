@@ -1,36 +1,41 @@
+require("@nomicfoundation/hardhat-toolbox")
 require("@nomiclabs/hardhat-waffle")
 require("@nomiclabs/hardhat-etherscan")
-require("hardhat-erc1820")
+require("@nomiclabs/hardhat-ethers")
 require("hardhat-deploy")
 require("solidity-coverage")
 require("hardhat-gas-reporter")
 require("hardhat-contract-sizer")
+require("keccak256")
 require("dotenv").config()
 
-const RINKEBY_RPC_URL = process.env.RINKEBY_RPC_URL
+const BSC_RPC_URL = process.env.BSC_RPC_URL
 const PRIVATE_KEY = process.env.PRIVATE_KEY
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+const BSCSCAN_API_KEY = process.env.BSCSCAN_API_KEY
 
 module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       chainId: 31337,
+      forking: {
+        enabled: false,
+        url: BSC_RPC_URL,
+      },
     },
     localhost: {
       chainId: 31337,
     },
-    rinkeby: {
-      url: RINKEBY_RPC_URL,
+    testnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      gasPrice: 20000000000,
       accounts: [PRIVATE_KEY],
       saveDeployments: true,
-      chainId: 4,
+      chainId: 97,
     },
   },
   etherscan: {
-    apiKey: {
-      rinkeby: ETHERSCAN_API_KEY,
-    },
+    apiKey: BSCSCAN_API_KEY,
   },
   gasReporter: {
     enabled: false,
@@ -41,7 +46,6 @@ module.exports = {
   },
   contractSizer: {
     runOnCompile: false,
-    only: ["LunaM"],
   },
   namedAccounts: {
     deployer: {
@@ -54,17 +58,22 @@ module.exports = {
   },
   solidity: {
     compilers: [
+      { version: "0.5.16" },
+      {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
+      },
       {
         version: "0.8.15",
-      },
-      {
-        version: "0.5.2",
-      },
-      {
-        version: "0.5.0",
-      },
-      {
-        version: "0.4.24",
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
       },
     ],
   },

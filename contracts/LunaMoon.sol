@@ -10,7 +10,7 @@ import "./LunaDividendTracker.sol";
 import "./uniswap/IUniswapV2Pair.sol";
 import "./uniswap/IUniswapV2Factory.sol";
 
-contract LunaMoon is ERC20, Ownable {
+contract TestNet_LunaMoon_V0_1 is ERC20, Ownable {
   //library
   using SafeMath for uint256;
   //custom
@@ -18,12 +18,12 @@ contract LunaMoon is ERC20, Ownable {
   _LUNADividendTracker public _lunaDividendTracker;
   //address
   address public uniswapV2Pair;
-  address public marketingWallet; // to be made
-  address public lunaBurnWallet = 0x6F3B3b903813679DDb21E4f2391638eE55ff3F89; // check required
-  address public liqWallet; // to be made
+  address public marketingWallet = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266; // development wallet testnet: 0x7474658eDA4B4A635Cb13941E7b7f285eaB2e686
+  address public lunaBurnWallet = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266; // development wallet
+  address public liqWallet = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266; // development wallet
   address public _lunaDividendToken;
   address public deadWallet = 0x000000000000000000000000000000000000dEaD;
-  address public lunaAddress = 0x156ab3346823B651294766e23e6Cf87254d68962; // LUNA Wormhole
+  address public lunaAddress = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0; // LUNA Wormhole: 0x156ab3346823B651294766e23e6Cf87254d68962
   //bool
   bool public marketingSwapSendActive = true;
   bool public lunaBurnSwapSendActive = true;
@@ -51,8 +51,8 @@ contract LunaMoon is ERC20, Ownable {
   uint256 public intervalSecondsForSwap = 20;
   uint256 public LUNARewardsBuyFee = 2;
   uint256 public LUNARewardsSellFee = 2;
-  uint256 public LUNABurnBuyFee = 1; // check required
-  uint256 public LUNABurnSellFee = 1; // check required
+  uint256 public LUNABurnBuyFee = 1;
+  uint256 public LUNABurnSellFee = 1;
   uint256 public marketingBuyFee = 2;
   uint256 public marketingSellFee = 2;
   uint256 public burnSellFee = 1;
@@ -141,13 +141,13 @@ contract LunaMoon is ERC20, Ownable {
   event LunaBurnFeeCollected(uint256 amount);
   event ExcludedFromMaxWalletChanged(address indexed user, bool state);
 
-  constructor() ERC20("LunaMoon", "LunaM") {
+  constructor() ERC20("TestNet_LunaMoon_V0_1", "LunaMN01") {
     uint256 _total_supply = 10_000_000_000 * (10**9);
     _lunaDividendToken = lunaAddress;
 
     _lunaDividendTracker = new _LUNADividendTracker(_lunaDividendToken);
     IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-      0x10ED43C718714eb63d5aA57B78B54704E256024E
+      0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
     );
     address _uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
       .createPair(address(this), _uniswapV2Router.WETH());
@@ -179,7 +179,7 @@ contract LunaMoon is ERC20, Ownable {
     premarketUser[owner()] = true;
     premarketUser[marketingWallet] = true;
     premarketUser[liqWallet] = true;
-    setAuthOnDividends(owner());
+    setAuthOnDividends(owner()); // for future implementations
     /*
             _mint is an internal function in ERC20.sol that is only called here,
             and CANNOT be called ever again
@@ -272,7 +272,7 @@ contract LunaMoon is ERC20, Ownable {
     tokensToSwap = _tokensToSwap * 10**decimals();
     require(
       tokensToSwap <= minimumTokensBeforeSwap,
-      "You cannot swap more then the minimum amount"
+      "You cannot swap more than the minimum amount"
     );
     require(
       tokensToSwap <= totalSupply() / 1000,
@@ -425,31 +425,53 @@ contract LunaMoon is ERC20, Ownable {
     liqWallet = newWallet;
   }
 
-  function setFees(
+  function setBuyFees(
     uint256 _reward_buy,
     uint256 _liq_buy,
     uint256 _marketing_buy,
+    uint256 _luna_burn_buy,
+    uint256 _burn_buy,
+    uint256 _dev_buy
+  ) external onlyOwner {
+    LUNARewardsBuyFee = _reward_buy;
+    LUNABurnBuyFee = _luna_burn_buy;
+    burnBuyFee = _burn_buy;
+    liqBuyFee = _liq_buy;
+    marketingBuyFee = _marketing_buy;
+    devBuyFee = _dev_buy;
+    totalBuyFees = LUNARewardsBuyFee
+      .add(marketingBuyFee)
+      .add(liqBuyFee)
+      .add(burnBuyFee)
+      .add(LUNABurnBuyFee)
+      .add(devBuyFee);
+    totalSellFees = LUNARewardsSellFee
+      .add(marketingSellFee)
+      .add(liqSellFee)
+      .add(burnSellFee)
+      .add(LUNABurnSellFee)
+      .add(devSellFee);
+    totalBuyFees > 0 ? buyFeeStatus = true : buyFeeStatus = false;
+    totalSellFees > 0 ? sellFeeStatus = true : sellFeeStatus = false;
+    require(
+      totalBuyFees + totalSellFees < 25,
+      "you cannot set fees more then 25%"
+    );
+  }
+
+  function setSellFees(
     uint256 _reward_sell,
     uint256 _liq_sell,
     uint256 _marketing_sell,
-    uint256 _luna_burn_buy,
     uint256 _luna_burn_sell,
-    uint256 _burn_buy,
     uint256 _burn_sell,
-    uint256 _dev_buy,
     uint256 _dev_sell
   ) external onlyOwner {
-    LUNARewardsBuyFee = _reward_buy;
     LUNARewardsSellFee = _reward_sell;
-    LUNABurnBuyFee = _luna_burn_buy;
     LUNABurnSellFee = _luna_burn_sell;
-    burnBuyFee = _burn_buy;
     burnSellFee = _burn_sell;
-    liqBuyFee = _liq_buy;
     liqSellFee = _liq_sell;
-    marketingBuyFee = _marketing_buy;
     marketingSellFee = _marketing_sell;
-    devBuyFee = _dev_buy;
     devSellFee = _dev_sell;
     totalBuyFees = LUNARewardsBuyFee
       .add(marketingBuyFee)
